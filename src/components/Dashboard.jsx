@@ -157,7 +157,7 @@ export default function Dashboard() {
   const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
   const currentYear = new Date().getFullYear().toString();
 
-  const [filterBulan, setFilterBulan] = useState(currentMonth);
+  const [filterBulan, setFilterBulan] = useState("");
   const [filterTahun, setFilterTahun] = useState(currentYear);
 
   const fetchData = async () => {
