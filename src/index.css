@@ -1,2 +1,6 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+
+.dark input[type="date"] {
+  color-scheme: dark;
+}

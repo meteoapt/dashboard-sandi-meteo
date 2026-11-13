@@ -100,16 +100,28 @@ export default function InputKesalahan() {
       keterangan: formData.keterangan?.trim() || null,
     };
 
+    let queryError = null;
+
     if (formData.id) {
-      await supabase
+      const { error } = await supabase
         .from("kesalahan_sandi")
         .update(payload)
         .eq("id", formData.id);
+      queryError = error;
     } else {
-      await supabase.from("kesalahan_sandi").insert([payload]);
+      const { error } = await supabase
+        .from("kesalahan_sandi")
+        .insert([payload]);
+      queryError = error;
     }
 
     setIsSubmitting(false);
+
+    if (queryError) {
+      alert("Gagal menyimpan data: " + queryError.message);
+      return;
+    }
+
     setIsModalOpen(false);
     resetForm();
     fetchData();
@@ -529,10 +541,15 @@ export default function InputKesalahan() {
                     type="date"
                     required
                     value={formData.tanggal}
+                    onClick={(e) => {
+                      try {
+                        e.target.showPicker?.();
+                      } catch {}
+                    }}
                     onChange={(e) =>
                       setFormData({ ...formData, tanggal: e.target.value })
                     }
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#38B2A6]/50 dark:focus:ring-[#52C7B4]/50"
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#38B2A6]/50 dark:focus:ring-[#52C7B4]/50 cursor-pointer dark:[color-scheme:dark]"
                   />
                 </div>
                 <div>
