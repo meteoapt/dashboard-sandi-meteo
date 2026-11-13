@@ -26,6 +26,7 @@ import {
   ChevronRight,
   MessageSquareText,
   X,
+  ArrowUpDown,
 } from "lucide-react";
 
 const formatTanggal = (tgl) =>
@@ -41,6 +42,7 @@ const getInitials = (name) => {
 const MiniTable = ({ title, icon: Icon, colorClass, data }) => {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc"); // "desc" = Terbaru, "asc" = Terlama
 
   // State untuk hover & klik keterangan per baris
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -50,36 +52,60 @@ const MiniTable = ({ title, icon: Icon, colorClass, data }) => {
     setCurrentPage(1);
     setHoveredItem(null);
     setSelectedItem(null);
-  }, [data, itemsPerPage]);
+  }, [data, itemsPerPage, sortOrder]);
 
   useEffect(() => {
     setHoveredItem(null);
     setSelectedItem(null);
   }, [currentPage]);
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  // Urutkan data berdasarkan tanggal (dan created_at jika tanggal sama)
+  const sortedData = [...data].sort((a, b) => {
+    const diff = new Date(a.tanggal) - new Date(b.tanggal);
+    if (diff !== 0) return sortOrder === "desc" ? -diff : diff;
+    const createdDiff =
+      new Date(a.created_at || 0) - new Date(b.created_at || 0);
+    return sortOrder === "desc" ? -createdDiff : createdDiff;
+  });
+
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = data.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
   // Prioritaskan item yang diklik (pinned), jika tidak ada gunakan yang sedang di-hover
   const activeItem = selectedItem || hoveredItem;
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-slate-100 dark:border-slate-800 flex flex-col h-[440px] overflow-hidden transition-colors">
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-        <div className="flex items-center gap-2">
-          <Icon className={`w-5 h-5 ${colorClass}`} />
-          <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-wide">
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Icon className={`w-5 h-5 shrink-0 ${colorClass}`} />
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-wide truncate">
             {title}
           </h3>
         </div>
-        <span className="text-xs font-bold px-2.5 py-1 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full">
-          {data.length} Kesalahan Sandi
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={() =>
+              setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
+            }
+            className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-[#38B2A6] dark:hover:border-[#52C7B4] transition cursor-pointer"
+            title="Urutkan tanggal"
+          >
+            <ArrowUpDown className="w-3 h-3 text-[#38B2A6] dark:text-[#52C7B4]" />
+            <span>{sortOrder === "desc" ? "Terbaru" : "Terlama"}</span>
+          </button>
+          <span
+            className="text-xs font-bold px-2.5 py-1 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full"
+            title={`${data.length} Kesalahan Sandi`}
+          >
+            {data.length}
+          </span>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {data.length === 0 ? (
+        {sortedData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm p-4">
             Nihil kesalahan. Josjis!
           </div>
@@ -87,7 +113,18 @@ const MiniTable = ({ title, icon: Icon, colorClass, data }) => {
           <table className="w-full text-left border-collapse text-sm">
             <thead className="bg-white dark:bg-slate-900 sticky top-0 shadow-sm z-10">
               <tr className="text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
-                <th className="px-4 py-3 w-16">Tgl</th>
+                <th
+                  onClick={() =>
+                    setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
+                  }
+                  className="px-4 py-3 w-20 cursor-pointer hover:text-[#1A7A8C] dark:hover:text-[#52C7B4] select-none transition-colors"
+                  title="Klik untuk ubah urutan tanggal"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Tgl</span>
+                    <ArrowUpDown className="w-3 h-3 opacity-70" />
+                  </div>
+                </th>
                 <th className="px-4 py-3 w-28">Pegawai</th>
                 <th className="px-4 py-3">Kesalahan</th>
               </tr>
@@ -115,17 +152,11 @@ const MiniTable = ({ title, icon: Icon, colorClass, data }) => {
                     <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200 align-top">
                       <div className="flex items-start gap-1.5">
                         <span>{d.nama_pegawai}</span>
-                        {d.keterangan && (
-                          <MessageSquareText
-                            className="w-3.5 h-3.5 text-[#38B2A6] dark:text-[#52C7B4] shrink-0 mt-0.5"
-                            title="Memiliki keterangan"
-                          />
-                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 align-top">
                       <div className="flex flex-col gap-1 text-[13px]">
-                        <span className="font-mono bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded line-through decoration-rose-300 dark:decoration-rose-500/50 break-all">
+                        <span className="font-mono bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded decoration-rose-300 dark:decoration-rose-500/50 break-all">
                           {d.sandi_salah}
                         </span>
                         <span className="font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded font-medium break-all">
@@ -177,7 +208,7 @@ const MiniTable = ({ title, icon: Icon, colorClass, data }) => {
         </div>
       )}
 
-      {data.length > 0 && (
+      {sortedData.length > 0 && (
         <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/40 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-1.5">
             <select
@@ -226,7 +257,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const { isDark } = useTheme();
 
-  const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
   const currentYear = new Date().getFullYear().toString();
 
   const [filterBulan, setFilterBulan] = useState("");

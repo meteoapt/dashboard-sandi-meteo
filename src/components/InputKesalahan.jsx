@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Filter,
   Calendar,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 export default function InputKesalahan() {
@@ -21,11 +23,12 @@ export default function InputKesalahan() {
   const [listPegawai, setListPegawai] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // State untuk Filter & Pencarian
+  // State untuk Filter, Pencarian & Urutan
   const [search, setSearch] = useState("");
   const [filterJenis, setFilterJenis] = useState("");
   const [filterBulan, setFilterBulan] = useState("");
   const [filterTahun, setFilterTahun] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc"); // "desc" = Terbaru, "asc" = Terlama
 
   // State untuk Pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -73,10 +76,10 @@ export default function InputKesalahan() {
     fetchData();
   }, []);
 
-  // Reset ke halaman 1 setiap kali filter, search, atau itemsPerPage diubah
+  // Reset ke halaman 1 setiap kali filter, search, urutan, atau itemsPerPage diubah
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, filterJenis, filterBulan, filterTahun, itemsPerPage]);
+  }, [search, filterJenis, filterBulan, filterTahun, itemsPerPage, sortOrder]);
 
   // Handler Submit
   const handleSubmit = async (e) => {
@@ -204,13 +207,19 @@ export default function InputKesalahan() {
     return matchSearch && matchJenis && matchBulan && matchTahun;
   });
 
+  // === LOGIKA SORTING ===
+  const sortedData = [...filteredData].sort((a, b) => {
+    const diff = new Date(a.tanggal) - new Date(b.tanggal);
+    if (diff !== 0) return sortOrder === "desc" ? -diff : diff;
+    const createdDiff =
+      new Date(a.created_at || 0) - new Date(b.created_at || 0);
+    return sortOrder === "desc" ? -createdDiff : createdDiff;
+  });
+
   // === LOGIKA PAGINATION ===
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
+  const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
   const getBadgeColor = (jenis) => {
     if (jenis === "TAF")
@@ -270,7 +279,7 @@ export default function InputKesalahan() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Filter Jenis Sandi (Terpisah) */}
+            {/* Filter Jenis Sandi */}
             <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm transition-colors">
               <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               <select
@@ -335,6 +344,24 @@ export default function InputKesalahan() {
               </select>
             </div>
 
+            {/* Tombol Urutan Tanggal (Ikon Saja) */}
+            <button
+              type="button"
+              onClick={() =>
+                setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
+              }
+              title={
+                sortOrder === "desc" ? "Urutan: Terbaru" : "Urutan: Terlama"
+              }
+              className="flex items-center justify-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 hover:border-[#38B2A6] dark:hover:border-[#52C7B4] text-slate-600 dark:text-slate-300 rounded-xl p-2 shadow-sm transition-colors cursor-pointer"
+            >
+              {sortOrder === "desc" ? (
+                <ArrowDown className="w-4 h-4 text-[#38B2A6] dark:text-[#52C7B4]" />
+              ) : (
+                <ArrowUp className="w-4 h-4 text-[#38B2A6] dark:text-[#52C7B4]" />
+              )}
+            </button>
+
             {/* Dropdown Jumlah Tampil */}
             <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm transition-colors">
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -369,7 +396,7 @@ export default function InputKesalahan() {
               <Loader2 className="w-8 h-8 animate-spin text-[#38B2A6] dark:text-[#52C7B4] mb-4" />
               <p>Memuat riwayat sandi...</p>
             </div>
-          ) : filteredData.length === 0 ? (
+          ) : sortedData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
               <FileSignature className="w-12 h-12 mb-4 text-slate-200 dark:text-slate-700" />
               <p>Belum ada riwayat kesalahan yang tercatat / ditemukan.</p>
@@ -378,7 +405,26 @@ export default function InputKesalahan() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 text-sm font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-5 py-4 w-32">Tanggal</th>
+                  <th
+                    onClick={() =>
+                      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
+                    }
+                    className="px-5 py-4 w-36 cursor-pointer hover:text-[#1A7A8C] dark:hover:text-[#52C7B4] select-none transition-colors"
+                    title={
+                      sortOrder === "desc"
+                        ? "Urutan: Terbaru"
+                        : "Urutan: Terlama"
+                    }
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Tanggal</span>
+                      {sortOrder === "desc" ? (
+                        <ArrowDown className="w-3.5 h-3.5 text-[#38B2A6] dark:text-[#52C7B4]" />
+                      ) : (
+                        <ArrowUp className="w-3.5 h-3.5 text-[#38B2A6] dark:text-[#52C7B4]" />
+                      )}
+                    </div>
+                  </th>
                   <th className="px-5 py-4 w-48">Pegawai</th>
                   <th className="px-5 py-4">Detail Kesalahan</th>
                   <th className="px-5 py-4 w-64">Keterangan</th>
@@ -410,7 +456,7 @@ export default function InputKesalahan() {
                           <span className="shrink-0 w-16 text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
                             Salah:
                           </span>
-                          <span className="font-mono text-sm px-2 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 rounded line-through decoration-rose-400/50 dark:decoration-rose-600/50 break-all">
+                          <span className="font-mono text-sm px-2 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 rounded decoration-rose-400/50 dark:decoration-rose-600/50 break-all">
                             {k.sandi_salah}
                           </span>
                         </div>
@@ -462,7 +508,7 @@ export default function InputKesalahan() {
         </div>
 
         {/* PAGINATION FOOTER */}
-        {filteredData.length > 0 && (
+        {sortedData.length > 0 && (
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/30 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
             <span className="text-sm text-slate-500 dark:text-slate-400">
               Menampilkan{" "}
@@ -471,11 +517,11 @@ export default function InputKesalahan() {
               </span>{" "}
               -{" "}
               <span className="font-semibold text-slate-700 dark:text-slate-200">
-                {Math.min(startIndex + itemsPerPage, filteredData.length)}
+                {Math.min(startIndex + itemsPerPage, sortedData.length)}
               </span>{" "}
               dari{" "}
               <span className="font-semibold text-slate-700 dark:text-slate-200">
-                {filteredData.length}
+                {sortedData.length}
               </span>{" "}
               data
             </span>
