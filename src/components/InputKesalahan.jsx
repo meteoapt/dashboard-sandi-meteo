@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Calendar,
 } from "lucide-react";
 
 export default function InputKesalahan() {
@@ -257,9 +258,9 @@ export default function InputKesalahan() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* Filter Jenis Sandi (Terpisah) */}
             <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm transition-colors">
               <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              {/* Filter Jenis Sandi (Sebelah Kiri Semua Bulan) */}
               <select
                 value={filterJenis}
                 onChange={(e) => setFilterJenis(e.target.value)}
@@ -278,7 +279,11 @@ export default function InputKesalahan() {
                   SYNOPTIK
                 </option>
               </select>
-              <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1" />
+            </div>
+
+            {/* Filter Bulan & Tahun */}
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm transition-colors">
+              <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               <select
                 value={filterBulan}
                 onChange={(e) => setFilterBulan(e.target.value)}
@@ -318,6 +323,7 @@ export default function InputKesalahan() {
               </select>
             </div>
 
+            {/* Dropdown Jumlah Tampil */}
             <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm transition-colors">
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Tampil:
