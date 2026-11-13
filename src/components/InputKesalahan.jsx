@@ -266,7 +266,7 @@ export default function InputKesalahan() {
                 className="bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
               >
                 <option value="" className="dark:bg-slate-900">
-                  Semua Sandi
+                  Jenis Sandi
                 </option>
                 <option value="METAR/SPECI" className="dark:bg-slate-900">
                   METAR / SPECI
@@ -285,7 +285,7 @@ export default function InputKesalahan() {
                 className="bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
               >
                 <option value="" className="dark:bg-slate-900">
-                  Semua Bulan
+                  Bulan
                 </option>
                 {daftarBulan.map((b) => (
                   <option
@@ -304,7 +304,7 @@ export default function InputKesalahan() {
                 className="bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
               >
                 <option value="" className="dark:bg-slate-900">
-                  Semua Tahun
+                  Tahun
                 </option>
                 {availableYears.map((t) => (
                   <option
