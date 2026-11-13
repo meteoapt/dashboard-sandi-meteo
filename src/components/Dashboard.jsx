@@ -24,6 +24,8 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  MessageSquareText,
+  X,
 } from "lucide-react";
 
 const formatTanggal = (tgl) =>
@@ -37,16 +39,30 @@ const getInitials = (name) => {
 };
 
 const MiniTable = ({ title, icon: Icon, colorClass, data }) => {
-  const [itemsPerPage, setItemsPerPage] = useState(5); // Default ke 5
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // State untuk hover & klik keterangan per baris
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     setCurrentPage(1);
+    setHoveredItem(null);
+    setSelectedItem(null);
   }, [data, itemsPerPage]);
+
+  useEffect(() => {
+    setHoveredItem(null);
+    setSelectedItem(null);
+  }, [currentPage]);
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = data.slice(startIndex, startIndex + itemsPerPage);
+
+  // Prioritaskan item yang diklik (pinned), jika tidak ada gunakan yang sedang di-hover
+  const activeItem = selectedItem || hoveredItem;
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-slate-100 dark:border-slate-800 flex flex-col h-[440px] overflow-hidden transition-colors">
@@ -77,33 +93,89 @@ const MiniTable = ({ title, icon: Icon, colorClass, data }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/80">
-              {paginatedData.map((d) => (
-                <tr
-                  key={d.id}
-                  className="hover:bg-[#F8FCFB] dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400 align-top">
-                    {formatTanggal(d.tanggal)}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200 align-top">
-                    {d.nama_pegawai}
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex flex-col gap-1 text-[13px]">
-                      <span className="font-mono bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded line-through decoration-rose-300 dark:decoration-rose-500/50 break-all">
-                        {d.sandi_salah}
-                      </span>
-                      <span className="font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded font-medium break-all">
-                        {d.sandi_seharusnya}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {paginatedData.map((d) => {
+                const isSelected = selectedItem?.id === d.id;
+                return (
+                  <tr
+                    key={d.id}
+                    onMouseEnter={() => setHoveredItem(d)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onClick={() =>
+                      setSelectedItem((prev) => (prev?.id === d.id ? null : d))
+                    }
+                    className={`cursor-pointer transition-colors ${
+                      isSelected
+                        ? "bg-[#EEF8F7] dark:bg-slate-800/90"
+                        : "hover:bg-[#F8FCFB] dark:hover:bg-slate-800/50"
+                    }`}
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400 align-top">
+                      {formatTanggal(d.tanggal)}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200 align-top">
+                      <div className="flex items-start gap-1.5">
+                        <span>{d.nama_pegawai}</span>
+                        {d.keterangan && (
+                          <MessageSquareText
+                            className="w-3.5 h-3.5 text-[#38B2A6] dark:text-[#52C7B4] shrink-0 mt-0.5"
+                            title="Memiliki keterangan"
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex flex-col gap-1 text-[13px]">
+                        <span className="font-mono bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded line-through decoration-rose-300 dark:decoration-rose-500/50 break-all">
+                          {d.sandi_salah}
+                        </span>
+                        <span className="font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded font-medium break-all">
+                          {d.sandi_seharusnya}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* PANEL KETERANGAN DINAMIS (MUNCUL SAAT HOVER ATAU KLIK BARIS) */}
+      {activeItem && (
+        <div className="px-4 py-2.5 bg-[#EEF8F7] dark:bg-slate-800/95 border-t border-[#BCE6E1] dark:border-slate-700 text-xs shrink-0 transition-all">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <span className="font-bold text-[#1A7A8C] dark:text-[#52C7B4] flex items-center gap-1.5 truncate">
+              <MessageSquareText className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                Keterangan ({activeItem.nama_pegawai} •{" "}
+                {formatTanggal(activeItem.tanggal)})
+              </span>
+            </span>
+            {selectedItem && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedItem(null);
+                }}
+                className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded cursor-pointer"
+                title="Tutup keterangan"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <p className="text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line break-words max-h-16 overflow-y-auto">
+            {activeItem.keterangan ? (
+              activeItem.keterangan
+            ) : (
+              <span className="italic text-slate-400 dark:text-slate-500">
+                Tidak ada keterangan tambahan.
+              </span>
+            )}
+          </p>
+        </div>
+      )}
 
       {data.length > 0 && (
         <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/40 flex items-center justify-between shrink-0">

@@ -22,6 +22,7 @@ export default function InputKesalahan() {
 
   // State untuk Filter & Pencarian
   const [search, setSearch] = useState("");
+  const [filterJenis, setFilterJenis] = useState("");
   const [filterBulan, setFilterBulan] = useState("");
   const [filterTahun, setFilterTahun] = useState("");
 
@@ -41,6 +42,7 @@ export default function InputKesalahan() {
     jenis_sandi: "METAR/SPECI",
     sandi_salah: "",
     sandi_seharusnya: "",
+    keterangan: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +75,7 @@ export default function InputKesalahan() {
   // Reset ke halaman 1 setiap kali filter, search, atau itemsPerPage diubah
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, filterBulan, filterTahun, itemsPerPage]);
+  }, [search, filterJenis, filterBulan, filterTahun, itemsPerPage]);
 
   // Handler Submit
   const handleSubmit = async (e) => {
@@ -94,6 +96,7 @@ export default function InputKesalahan() {
       jenis_sandi: formData.jenis_sandi,
       sandi_salah: formData.sandi_salah,
       sandi_seharusnya: formData.sandi_seharusnya,
+      keterangan: formData.keterangan?.trim() || null,
     };
 
     if (formData.id) {
@@ -119,6 +122,7 @@ export default function InputKesalahan() {
       jenis_sandi: "METAR/SPECI",
       sandi_salah: "",
       sandi_seharusnya: "",
+      keterangan: "",
     });
   };
 
@@ -131,6 +135,7 @@ export default function InputKesalahan() {
       jenis_sandi: k.jenis_sandi,
       sandi_salah: k.sandi_salah,
       sandi_seharusnya: k.sandi_seharusnya,
+      keterangan: k.keterangan || "",
     });
     setIsModalOpen(true);
   };
@@ -170,7 +175,11 @@ export default function InputKesalahan() {
     const matchSearch =
       k.nama_pegawai.toLowerCase().includes(search.toLowerCase()) ||
       k.jenis_sandi.toLowerCase().includes(search.toLowerCase()) ||
-      k.sandi_salah.toLowerCase().includes(search.toLowerCase());
+      k.sandi_salah.toLowerCase().includes(search.toLowerCase()) ||
+      (k.keterangan &&
+        k.keterangan.toLowerCase().includes(search.toLowerCase()));
+
+    const matchJenis = filterJenis ? k.jenis_sandi === filterJenis : true;
 
     const d = new Date(k.tanggal);
     const monthStr = String(d.getMonth() + 1).padStart(2, "0");
@@ -179,7 +188,7 @@ export default function InputKesalahan() {
     const matchBulan = filterBulan ? monthStr === filterBulan : true;
     const matchTahun = filterTahun ? yearStr === filterTahun : true;
 
-    return matchSearch && matchBulan && matchTahun;
+    return matchSearch && matchJenis && matchBulan && matchTahun;
   });
 
   // === LOGIKA PAGINATION ===
@@ -240,7 +249,7 @@ export default function InputKesalahan() {
             <Search className="w-5 h-5 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari nama pegawai, jenis, atau isi sandi..."
+              placeholder="Cari nama pegawai, jenis, isi sandi, atau keterangan..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38B2A6]/50 dark:focus:ring-[#52C7B4]/50 transition-all"
@@ -250,6 +259,26 @@ export default function InputKesalahan() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm transition-colors">
               <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              {/* Filter Jenis Sandi (Sebelah Kiri Semua Bulan) */}
+              <select
+                value={filterJenis}
+                onChange={(e) => setFilterJenis(e.target.value)}
+                className="bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="" className="dark:bg-slate-900">
+                  Semua Sandi
+                </option>
+                <option value="METAR/SPECI" className="dark:bg-slate-900">
+                  METAR / SPECI
+                </option>
+                <option value="TAF" className="dark:bg-slate-900">
+                  TAF
+                </option>
+                <option value="SYNOPTIK" className="dark:bg-slate-900">
+                  SYNOPTIK
+                </option>
+              </select>
+              <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1" />
               <select
                 value={filterBulan}
                 onChange={(e) => setFilterBulan(e.target.value)}
@@ -334,6 +363,7 @@ export default function InputKesalahan() {
                   <th className="px-5 py-4 w-32">Tanggal</th>
                   <th className="px-5 py-4 w-48">Pegawai</th>
                   <th className="px-5 py-4">Detail Kesalahan</th>
+                  <th className="px-5 py-4 w-64">Keterangan</th>
                   <th className="px-5 py-4 text-right w-28">Aksi</th>
                 </tr>
               </thead>
@@ -343,10 +373,10 @@ export default function InputKesalahan() {
                     key={k.id}
                     className="hover:bg-[#F8FCFB] dark:hover:bg-slate-800/30 transition-colors"
                   >
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300 font-medium">
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300 font-medium align-top">
                       {formatTanggal(k.tanggal)}
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
+                    <td className="px-5 py-4 whitespace-nowrap align-top">
                       <div className="font-semibold text-slate-800 dark:text-slate-100">
                         {k.nama_pegawai}
                       </div>
@@ -356,8 +386,8 @@ export default function InputKesalahan() {
                         {k.jenis_sandi}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col gap-2 min-w-[280px]">
+                    <td className="px-5 py-4 align-top">
+                      <div className="flex flex-col gap-2 min-w-[260px]">
                         <div className="flex items-start gap-2">
                           <span className="shrink-0 w-16 text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
                             Salah:
@@ -375,6 +405,18 @@ export default function InputKesalahan() {
                           </span>
                         </div>
                       </div>
+                    </td>
+                    {/* Kolom Keterangan (Sebelah Kanan Detail Kesalahan) */}
+                    <td className="px-5 py-4 align-top text-sm text-slate-600 dark:text-slate-300 max-w-xs">
+                      {k.keterangan ? (
+                        <p className="whitespace-pre-line break-words leading-relaxed">
+                          {k.keterangan}
+                        </p>
+                      ) : (
+                        <span className="text-slate-400 dark:text-slate-600 italic text-xs">
+                          -
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-right align-top">
                       <div className="flex justify-end gap-2 mt-1">
@@ -468,7 +510,10 @@ export default function InputKesalahan() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form
+              onSubmit={handleSubmit}
+              className="p-6 space-y-5 max-h-[85vh] overflow-y-auto"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
@@ -578,6 +623,28 @@ export default function InputKesalahan() {
                     }
                     placeholder="Input Sandi yang benar di sini..."
                     className="w-full px-4 py-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-sm text-slate-900 dark:text-emerald-50 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-600/50 transition resize-none placeholder:font-sans placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  />
+                </div>
+
+                {/* Input Keterangan (Di Bawah Sandi Seharusnya) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Keterangan{" "}
+                    <span className="text-xs font-normal text-slate-400">
+                      (Opsional)
+                    </span>
+                  </label>
+                  <textarea
+                    rows="2"
+                    value={formData.keterangan}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        keterangan: e.target.value,
+                      })
+                    }
+                    placeholder="Tambahkan keterangan atau catatan kesalahan di sini..."
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#38B2A6]/50 dark:focus:ring-[#52C7B4]/50 transition resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </div>
